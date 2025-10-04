@@ -1,4 +1,4 @@
--- Profiles with full_name & avatar and safe RLS + public avatars bucket
+-- Profiles + avatars (RLS) + storage policies
 create table if not exists public.profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
@@ -40,19 +40,30 @@ drop policy if exists user_update_own on public.profiles;
 create policy user_update_own on public.profiles
 for update to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
--- Public bucket for avatars
+-- Storage bucket for avatars
 insert into storage.buckets (id, name, public)
 values ('avatars','avatars', true)
 on conflict (id) do nothing;
 
--- Policies for Storage
+-- Public read
 drop policy if exists "Public read avatars" on storage.objects;
 create policy "Public read avatars" on storage.objects
 for select to public
 using (bucket_id = 'avatars');
 
-drop policy if exists "Users manage own avatars" on storage.objects;
-create policy "Users manage own avatars" on storage.objects
-for all to authenticated
-using (bucket_id = 'avatars' and (auth.uid()::text = (storage.foldername(name)) ) )
-with check (bucket_id = 'avatars' and (auth.uid()::text = (storage.foldername(name)) ) );
+-- Access only to own folder {user_id}/*
+drop policy if exists "Users upload to their folder" on storage.objects;
+create policy "Users upload to their folder" on storage.objects
+for insert to authenticated
+with check (bucket_id = 'avatars' and split_part(name,'/',1) = auth.uid()::text);
+
+drop policy if exists "Users update own avatars" on storage.objects;
+create policy "Users update own avatars" on storage.objects
+for update to authenticated
+using (bucket_id = 'avatars' and split_part(name,'/',1) = auth.uid()::text)
+with check (bucket_id = 'avatars' and split_part(name,'/',1) = auth.uid()::text);
+
+drop policy if exists "Users delete own avatars" on storage.objects;
+create policy "Users delete own avatars" on storage.objects
+for delete to authenticated
+using (bucket_id = 'avatars' and split_part(name,'/',1) = auth.uid()::text);

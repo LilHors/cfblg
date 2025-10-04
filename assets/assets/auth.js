@@ -26,6 +26,7 @@
   `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
+  // ----- Modal -----
   let backdrop;
   function buildModal(){
     if(backdrop) return;
@@ -61,7 +62,7 @@
     }
     function normalizeError(error){
       const msg=(error && (error.message||error.toString()))||'Unknown error';
-      if(msg==='Failed to fetch'){ return 'Failed to fetch\\n\\nПроверь: 1) ключи SUPABASE_URL/ANON_KEY, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
+      if(msg==='Failed to fetch'){ return 'Failed to fetch\n\nПроверь: 1) ключи, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
       if(/Anonymous sign-ins/.test(msg)) return 'Введи email и пароль — анонимный вход отключён.';
       return msg;
     }
@@ -70,21 +71,22 @@
       clearError();
       const email = emailEl().value.trim(), password = passEl().value.trim();
       if(!checkCreds(email,password)) return;
-      let error=null; try{ ({error} = await client.auth.signInWithPassword({ email, password })); }catch(e){ error=e; }
-      if(error) showError(normalizeError(error)); else closeModal();
+      let err=null; try{ ({error:err} = await client.auth.signInWithPassword({ email, password })); }catch(e){ err=e; }
+      if(err) showError(normalizeError(err)); else closeModal();
     };
     backdrop.querySelector('#doSignUp').onclick = async ()=>{
       clearError();
       const email = emailEl().value.trim(), password = passEl().value.trim();
       if(!checkCreds(email,password)) return;
-      let error=null; try{ ({error} = await client.auth.signUp({ email, password })); }catch(e){ error=e; }
-      if(error) showError(normalizeError(error));
+      let err=null; try{ ({error:err} = await client.auth.signUp({ email, password })); }catch(e){ err=e; }
+      if(err) showError(normalizeError(err));
       else { closeModal(); alert('Проверь почту для подтверждения (если включено).'); }
     };
   }
   function openModal(){ buildModal(); backdrop.style.display='flex'; }
   function closeModal(){ if(backdrop) backdrop.style.display='none'; }
 
+  // ----- Header user widget -----
   function ensureHeaderButtons(){
     const header = document.querySelector('header .wrap.nav') || document.querySelector('header');
     if(!header) return;
