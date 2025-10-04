@@ -1,8 +1,10 @@
 (function(){
-  const SUPABASE_URL = window.SUPABASE_URL || "https://sgswdxdpgursjfpvwnpj.supabase.co";
-  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnc3dkeGRwZ3Vyc2pmcHZ3bnBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzUzNDksImV4cCI6MjA3NTExMTM0OX0.f4NWkoEkMqFLG0Ms2gmEVGAAebaSmBwJ9NpmHfM0RYs";
+  const SUPABASE_URL = window.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
   if (!window.supabase) { console.warn("[auth] Supabase SDK not found."); return; }
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) { console.error("[auth] Missing SUPABASE_URL/ANON_KEY"); return; }
+
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
@@ -26,7 +28,7 @@
   `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
-  // ----- Modal -----
+  // Modal
   let backdrop;
   function buildModal(){
     if(backdrop) return;
@@ -64,6 +66,7 @@
       const msg=(error && (error.message||error.toString()))||'Unknown error';
       if(msg==='Failed to fetch'){ return 'Failed to fetch\n\nПроверь: 1) ключи, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
       if(/Anonymous sign-ins/.test(msg)) return 'Введи email и пароль — анонимный вход отключён.';
+      if(/Invalid API key/i.test(msg)) return 'Invalid API key — проверь anon ключ в assets/env.js';
       return msg;
     }
 
@@ -86,7 +89,7 @@
   function openModal(){ buildModal(); backdrop.style.display='flex'; }
   function closeModal(){ if(backdrop) backdrop.style.display='none'; }
 
-  // ----- Header user widget -----
+  // Header user widget
   function ensureHeaderButtons(){
     const header = document.querySelector('header .wrap.nav') || document.querySelector('header');
     if(!header) return;
@@ -148,6 +151,4 @@
   window.addEventListener('DOMContentLoaded', refreshUI);
 
   window.Auth = { client, open: openModal, close: closeModal, refreshUI };
-  window.SUPABASE_URL = window.SUPABASE_URL || SUPABASE_URL;
-  window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
 })();

@@ -1,4 +1,4 @@
--- Profiles + avatars (RLS) + storage policies
+-- Profiles + avatars (RLS) + storage policies (GitHub Pages friendly)
 create table if not exists public.profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,
@@ -51,7 +51,7 @@ create policy "Public read avatars" on storage.objects
 for select to public
 using (bucket_id = 'avatars');
 
--- Access only to own folder {user_id}/*
+-- Owner-only access to {user_id}/*
 drop policy if exists "Users upload to their folder" on storage.objects;
 create policy "Users upload to their folder" on storage.objects
 for insert to authenticated
