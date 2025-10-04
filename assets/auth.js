@@ -1,7 +1,7 @@
 // assets/auth.js
 (function () {
-  const SUPABASE_URL = window.https://sgswdxdpgursjfpvwnpj.supabase.co;
-  const SUPABASE_ANON_KEY = window.eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnc3dkeGRwZ3Vyc2pmcHZ3bnBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzUzNDksImV4cCI6MjA3NTExMTM0OX0.f4NWkoEkMqFLG0Ms2gmEVGAAebaSmBwJ9NpmHfM0RYs;
+  const SUPABASE_URL = window.SUPABASE_URL;
+  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
   if (!window.supabase) { console.warn("[auth] Supabase SDK не найден"); return; }
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) { console.error("[auth] Нет SUPABASE_URL/ANON_KEY"); return; }
@@ -10,7 +10,7 @@
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
 
-  // Немного стилей (модалка + виджет)
+  // ---------- СТИЛИ ----------
   const css = `
     .auth-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:2147483647}
     .auth-modal{background:#111827;color:#e5e7eb;border:1px solid #2f3640;border-radius:16px;max-width:420px;width:94%;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
@@ -29,7 +29,7 @@
   `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
-  // --- Модалка ---
+  // ---------- МОДАЛКА ----------
   let backdrop;
   function buildModal() {
     if (backdrop) return;
@@ -73,7 +73,7 @@
       return msg;
     };
 
-    // --- Войти (с резервом setSession) ---
+    // --- Войти (устойчивый вариант без 422) ---
     backdrop.querySelector('#doSignIn').onclick = async () => {
       clearError();
       const email = emailEl().value.trim();
@@ -81,38 +81,41 @@
       if (!checkCreds(email, password)) return;
 
       try {
-        // 1) Обычный путь
-        const { data, error } = await client.auth.signInWithPassword({ email, password });
+        // 1) Штатный SDK-вход
+        let { data, error } = await client.auth.signInWithPassword({ email, password });
         if (!error && data?.session) { closeModal(); await refreshUI(); return; }
-        if (error) throw error;
-        // если data без session — пойдём резервом
-      } catch (e1) {
-        try {
-          // 2) Резерв: прямой POST + setSession
-          const u = SUPABASE_URL.replace(/\/$/, '') + '/auth/v1/token?grant_type=password';
-          const r = await fetch(u, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              apikey: SUPABASE_ANON_KEY,
-              Authorization: `Bearer ${SUPABASE_ANON_KEY}`
-            },
-            body: JSON.stringify({ email, password })
-          });
-          const b = await r.json();
-          if (!r.ok) throw new Error(b.error_description || b.message || JSON.stringify(b));
 
+        // 2) Резерв: прямой POST к /token?grant_type=password
+        const u = SUPABASE_URL.replace(/\/$/, '') + '/auth/v1/token?grant_type=password';
+        const r = await fetch(u, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ email, password }),
+        });
+        const body = await r.json();
+        if (!r.ok) throw new Error(body.error_description || body.message || JSON.stringify(body));
+
+        // 2a) Если refresh_token есть — ставим сессию вручную
+        if (body.refresh_token) {
           const { error: setErr } = await client.auth.setSession({
-            access_token: b.access_token,
-            refresh_token: b.refresh_token
+            access_token: body.access_token,
+            refresh_token: body.refresh_token,
           });
           if (setErr) throw setErr;
-
-          closeModal();
-          await refreshUI();
-        } catch (e2) {
-          showError(normalize(e2?.message || String(e2)));
+        } else {
+          // 2b) Иначе добираем полноценную сессию SDK-входом
+          ({ data, error } = await client.auth.signInWithPassword({ email, password }));
+          if (error || !data?.session) throw new Error(error?.message || 'Не удалось создать сессию.');
         }
+
+        closeModal();
+        await refreshUI();
+      } catch (e) {
+        showError(normalize(e?.message || String(e)));
       }
     };
 
@@ -136,7 +139,7 @@
   function openModal() { buildModal(); backdrop.style.display = 'flex'; }
   function closeModal() { if (backdrop) backdrop.style.display = 'none'; }
 
-  // --- Кнопка в шапке + делегирование кликов ---
+  // ---------- КНОПКА В ШАПКЕ + ДЕЛЕГИРОВАНИЕ ----------
   function ensureHeaderButtons() {
     const header = document.querySelector('header .wrap.nav') || document.querySelector('header') || document.querySelector('.wrap') || document.body;
     if (!header) return;
@@ -153,7 +156,7 @@
     if (t) { e.preventDefault(); openModal(); }
   });
 
-  // --- Профиль + UI ---
+  // ---------- ПРОФИЛЬ + UI ----------
   async function getProfile(user) {
     if (!user) return null;
     await client.from('profiles').upsert({ user_id: user.id, email: user.email }).select().single().catch(() => {});
@@ -191,7 +194,7 @@
 
   async function refreshUI() {
     ensureHeaderButtons();
-    const { data: { session } } = await client.auth.getSession();
+    const { data: { session} } = await client.auth.getSession();
     if (!session || !session.user) { renderUserWidget(null); return; }
     const profile = await getProfile(session.user);
     renderUserWidget({ user: session.user, profile });
