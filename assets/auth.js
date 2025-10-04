@@ -1,13 +1,12 @@
 (function(){
   const SUPABASE_URL = window.SUPABASE_URL || "https://sgswdxdpgursjfpvwnpj.supabase.co";
-  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJh...M0RYs"; // укорочено
+  const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnc3dkeGRwZ3Vyc2pmcHZ3bnBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzUzNDksImV4cCI6MjA3NTExMTM0OX0.f4NWkoEkMqFLG0Ms2gmEVGAAebaSmBwJ9NpmHfM0RYs";
 
   if (!window.supabase) { console.warn("[auth] Supabase SDK not found."); return; }
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
 
-  // Стили модалки и виджета
   const css = `
     .auth-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9998}
     .auth-modal{background:#111827;color:#e5e7eb;border:1px solid #2f3640;border-radius:16px;max-width:420px;width:94%;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
@@ -27,7 +26,7 @@
   `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
-  // ----- Модалка входа/регистрации -----
+  // ----- Modal -----
   let backdrop;
   function buildModal(){
     if(backdrop) return;
@@ -49,7 +48,6 @@
     document.body.appendChild(backdrop);
     backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
     backdrop.querySelector('#closeAuth').onclick = closeModal;
-
     const emailEl = ()=> backdrop.querySelector('#authEmail');
     const passEl  = ()=> backdrop.querySelector('#authPass');
 
@@ -64,7 +62,7 @@
     }
     function normalizeError(error){
       const msg=(error && (error.message||error.toString()))||'Unknown error';
-      if(msg==='Failed to fetch'){ return 'Failed to fetch\n\nПроверь: 1) ключи SUPABASE_URL/ANON_KEY, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
+      if(msg==='Failed to fetch'){ return 'Failed to fetch\n\nПроверь: 1) ключи, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
       if(/Anonymous sign-ins/.test(msg)) return 'Введи email и пароль — анонимный вход отключён.';
       return msg;
     }
@@ -73,22 +71,22 @@
       clearError();
       const email = emailEl().value.trim(), password = passEl().value.trim();
       if(!checkCreds(email,password)) return;
-      let error=null; try{ ({error} = await client.auth.signInWithPassword({ email, password })); }catch(e){ error=e; }
-      if(error) showError(normalizeError(error)); else closeModal();
+      let err=null; try{ ({error:err} = await client.auth.signInWithPassword({ email, password })); }catch(e){ err=e; }
+      if(err) showError(normalizeError(err)); else closeModal();
     };
     backdrop.querySelector('#doSignUp').onclick = async ()=>{
       clearError();
       const email = emailEl().value.trim(), password = passEl().value.trim();
       if(!checkCreds(email,password)) return;
-      let error=null; try{ ({error} = await client.auth.signUp({ email, password })); }catch(e){ error=e; }
-      if(error) showError(normalizeError(error));
+      let err=null; try{ ({error:err} = await client.auth.signUp({ email, password })); }catch(e){ err=e; }
+      if(err) showError(normalizeError(err));
       else { closeModal(); alert('Проверь почту для подтверждения (если включено).'); }
     };
   }
   function openModal(){ buildModal(); backdrop.style.display='flex'; }
   function closeModal(){ if(backdrop) backdrop.style.display='none'; }
 
-  // ----- Виджет пользователя в шапке -----
+  // ----- Header user widget -----
   function ensureHeaderButtons(){
     const header = document.querySelector('header .wrap.nav') || document.querySelector('header');
     if(!header) return;
@@ -102,7 +100,6 @@
 
   async function getProfile(user){
     if(!user) return null;
-    // гарантируем наличие строки профиля
     await client.from('profiles').upsert({ user_id: user.id, email: user.email }).select().single().catch(()=>{});
     const { data } = await client.from('profiles').select('full_name, avatar_url, email').eq('user_id', user.id).single();
     return data || { full_name: null, avatar_url: null, email: user.email };
@@ -150,7 +147,6 @@
   client.auth.onAuthStateChange(async ()=>{ await refreshUI(); });
   window.addEventListener('DOMContentLoaded', refreshUI);
 
-  // экспорт
   window.Auth = { client, open: openModal, close: closeModal, refreshUI };
   window.SUPABASE_URL = window.SUPABASE_URL || SUPABASE_URL;
   window.SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY || SUPABASE_ANON_KEY;
