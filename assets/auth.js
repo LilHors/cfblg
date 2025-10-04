@@ -1,16 +1,18 @@
-(function(){
+// assets/auth.js
+(function () {
   const SUPABASE_URL = window.SUPABASE_URL;
   const SUPABASE_ANON_KEY = window.SUPABASE_ANON_KEY;
 
-  if (!window.supabase) { console.warn("[auth] Supabase SDK not found."); return; }
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) { console.error("[auth] Missing SUPABASE_URL/ANON_KEY"); return; }
+  if (!window.supabase) { console.warn("[auth] Supabase SDK не найден"); return; }
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) { console.error("[auth] Нет SUPABASE_URL/ANON_KEY"); return; }
 
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
   });
 
+  // Немного стилей (модалка + виджет)
   const css = `
-    .auth-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:9998}
+    .auth-modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:2147483647}
     .auth-modal{background:#111827;color:#e5e7eb;border:1px solid #2f3640;border-radius:16px;max-width:420px;width:94%;padding:18px;box-shadow:0 12px 30px rgba(0,0,0,.35)}
     .auth-modal h3{margin:0 0 8px;font-size:18px}
     .auth-modal label{display:flex;flex-direction:column;gap:6px;margin:8px 0}
@@ -18,19 +20,19 @@
     .auth-modal .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
     .auth-modal button{cursor:pointer;border:1px solid #2f3640;background:#0f172a;color:inherit;border-radius:10px;padding:8px 12px}
     .auth-error{color:#ef4444;font-size:13px;margin-top:6px;white-space:pre-wrap}
-
     .userwidget{position:relative;display:inline-flex;align-items:center;gap:8px;margin-left:8px}
-    .userwidget .avatar{width:28px;height:28px;border-radius:999px;object-fit:cover;border:1px solid #2f3640;background:#1f2937;display:inline-block}
+    .userwidget .avatar{width:28px;height:28px;border-radius:999px;object-fit:cover;border:1px solid #2f3640;background:#1f2937}
     .userwidget .name{cursor:pointer;user-select:none}
-    .userwidget .menu{position:absolute;right:0;top:120%;background:#0f172a;border:1px solid #2f3640;border-radius:10px;min-width:180px;display:none;z-index:9999}
-    .userwidget .menu a, .userwidget .menu button{display:block;width:100%;text-align:left;padding:8px 10px;border:0;background:transparent;color:#e5e7eb;cursor:pointer}
-    .userwidget .menu a:hover, .userwidget .menu button:hover{background:#111827}
+    .userwidget .menu{position:absolute;right:0;top:120%;background:#0f172a;border:1px solid #2f3640;border-radius:10px;min-width:180px;display:none;z-index:2147483647}
+    .userwidget .menu a,.userwidget .menu button{display:block;width:100%;text-align:left;padding:8px 10px;border:0;background:transparent;color:#e5e7eb;cursor:pointer}
+    .userwidget .menu a:hover,.userwidget .menu button:hover{background:#111827}
   `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
+  // --- Модалка ---
   let backdrop;
-  function buildModal(){
-    if(backdrop) return;
+  function buildModal() {
+    if (backdrop) return;
     backdrop = document.createElement('div');
     backdrop.className = 'auth-modal-backdrop';
     backdrop.innerHTML = `
@@ -47,82 +49,130 @@
         </div>
       </div>`;
     document.body.appendChild(backdrop);
-    backdrop.addEventListener('click',(e)=>{ if(e.target===backdrop) closeModal(); });
+    backdrop.addEventListener('click', (e) => { if (e.target === backdrop) closeModal(); });
     backdrop.querySelector('#closeAuth').onclick = closeModal;
-    const emailEl = ()=> backdrop.querySelector('#authEmail');
-    const passEl  = ()=> backdrop.querySelector('#authPass');
 
-    function showError(msg){ const box=document.getElementById('authError'); if(box){ box.textContent=msg; box.style.display='block'; } }
-    function clearError(){ const box=document.getElementById('authError'); if(box){ box.textContent=''; box.style.display='none'; } }
-    function checkCreds(email, password){
-      if(!email || !password){ showError('Укажи email и пароль.'); return false; }
-      const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if(!okEmail){ showError('Некорректный email.'); return false; }
-      if(password.length < 8){ showError('Пароль минимум 8 символов.'); return false; }
+    const emailEl = () => backdrop.querySelector('#authEmail');
+    const passEl  = () => backdrop.querySelector('#authPass');
+    const errBox  = () => document.getElementById('authError');
+
+    const showError = (msg) => { const b = errBox(); if (b) { b.textContent = msg; b.style.display = 'block'; } };
+    const clearError = () => { const b = errBox(); if (b) { b.textContent = ''; b.style.display = 'none'; } };
+    const checkCreds = (email, pw) => {
+      if (!email || !pw) { showError('Укажи email и пароль.'); return false; }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showError('Некорректный email.'); return false; }
+      if (pw.length < 8) { showError('Пароль минимум 8 символов.'); return false; }
       return true;
-    }
-    function normalizeError(error){
-      const msg=(error && (error.message||error.toString()))||'Unknown error';
-      if(msg==='Failed to fetch'){ return 'Failed to fetch\n\nПроверь: 1) ключи, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
-      if(/Anonymous sign-ins/.test(msg)) return 'Введи email и пароль — анонимный вход отключён.';
-      if(/Invalid API key/i.test(msg)) return 'Invalid API key — проверь anon ключ в assets/env.js';
-      return msg;
-    }
-
-    backdrop.querySelector('#doSignIn').onclick = async ()=>{
-      clearError();
-      const email = emailEl().value.trim(), password = passEl().value.trim();
-      if(!checkCreds(email,password)) return;
-      let err=null; try{ ({error:err} = await client.auth.signInWithPassword({ email, password })); }catch(e){ err=e; }
-      if(err) showError(normalizeError(err)); else closeModal();
     };
-    backdrop.querySelector('#doSignUp').onclick = async ()=>{
+    const normalize = (msg) => {
+      if (msg === 'Failed to fetch') return 'Failed to fetch\n\nПроверь: 1) ключи, 2) https/не file://, 3) VPN/AdBlock, 4) URL Configuration.';
+      if (/not confirmed/i.test(msg)) return 'Email не подтверждён. Подтверди в письме или попроси админа подтвердить в панели.';
+      if (/invalid login/i.test(msg)) return 'Неверный email или пароль.';
+      if (/rate|429/i.test(msg)) return 'Слишком много попыток. Подожди минуту.';
+      if (/disabled/i.test(msg)) return 'Вход/регистрация по email отключены администратором.';
+      return msg;
+    };
+
+    // --- Войти (с резервом setSession) ---
+    backdrop.querySelector('#doSignIn').onclick = async () => {
       clearError();
-      const email = emailEl().value.trim(), password = passEl().value.trim();
-      if(!checkCreds(email,password)) return;
-      let err=null; try{ ({error:err} = await client.auth.signUp({ email, password })); }catch(e){ err=e; }
-      if(err) showError(normalizeError(err));
-      else { closeModal(); alert('Проверь почту для подтверждения (если включено).'); }
+      const email = emailEl().value.trim();
+      const password = passEl().value.trim();
+      if (!checkCreds(email, password)) return;
+
+      try {
+        // 1) Обычный путь
+        const { data, error } = await client.auth.signInWithPassword({ email, password });
+        if (!error && data?.session) { closeModal(); await refreshUI(); return; }
+        if (error) throw error;
+        // если data без session — пойдём резервом
+      } catch (e1) {
+        try {
+          // 2) Резерв: прямой POST + setSession
+          const u = SUPABASE_URL.replace(/\/$/, '') + '/auth/v1/token?grant_type=password';
+          const r = await fetch(u, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              apikey: SUPABASE_ANON_KEY,
+              Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({ email, password })
+          });
+          const b = await r.json();
+          if (!r.ok) throw new Error(b.error_description || b.message || JSON.stringify(b));
+
+          const { error: setErr } = await client.auth.setSession({
+            access_token: b.access_token,
+            refresh_token: b.refresh_token
+          });
+          if (setErr) throw setErr;
+
+          closeModal();
+          await refreshUI();
+        } catch (e2) {
+          showError(normalize(e2?.message || String(e2)));
+        }
+      }
+    };
+
+    // --- Регистрация ---
+    backdrop.querySelector('#doSignUp').onclick = async () => {
+      clearError();
+      const email = emailEl().value.trim();
+      const password = passEl().value.trim();
+      if (!checkCreds(email, password)) return;
+      try {
+        const { error } = await client.auth.signUp({ email, password });
+        if (error) throw error;
+        closeModal();
+        alert('Если включено подтверждение — проверь почту.');
+      } catch (e) {
+        showError(normalize(e?.message || String(e)));
+      }
     };
   }
-  function openModal(){ buildModal(); backdrop.style.display='flex'; }
-  function closeModal(){ if(backdrop) backdrop.style.display='none'; }
 
-  function ensureHeaderButtons(){
+  function openModal() { buildModal(); backdrop.style.display = 'flex'; }
+  function closeModal() { if (backdrop) backdrop.style.display = 'none'; }
+
+  // --- Кнопка в шапке + делегирование кликов ---
+  function ensureHeaderButtons() {
     const header = document.querySelector('header .wrap.nav') || document.querySelector('header') || document.querySelector('.wrap') || document.body;
-    if(!header) return;
-    if(!document.getElementById('authOpen')){
-      const b=document.createElement('button'); b.id='authOpen'; b.className='btn'; b.type='button'; b.textContent='🔐 Войти';
+    if (!header) return;
+    if (!document.getElementById('authOpen')) {
+      const b = document.createElement('button'); b.id = 'authOpen'; b.className = 'btn'; b.type = 'button'; b.textContent = '🔐 Войти';
       header.appendChild(b);
     }
-    if(!document.getElementById('userWidget')){
-      const div = document.createElement('div'); div.id = 'userWidget'; div.className = 'userwidget'; header.appendChild(div);
+    if (!document.getElementById('userWidget')) {
+      const d = document.createElement('div'); d.id = 'userWidget'; d.className = 'userwidget'; header.appendChild(d);
     }
   }
-
-  // Delegation — supports many button variants
-  document.addEventListener('click', (e)=>{
+  document.addEventListener('click', (e) => {
     const t = e.target.closest('#authOpen,[data-auth-open],a[href="#login"],a[href*="login"],button[name="login"],.btn-login');
-    if(t){ e.preventDefault(); openModal(); }
+    if (t) { e.preventDefault(); openModal(); }
   });
 
-  async function getProfile(user){
-    if(!user) return null;
-    await client.from('profiles').upsert({ user_id: user.id, email: user.email }).select().single().catch(()=>{});
+  // --- Профиль + UI ---
+  async function getProfile(user) {
+    if (!user) return null;
+    await client.from('profiles').upsert({ user_id: user.id, email: user.email }).select().single().catch(() => {});
     const { data } = await client.from('profiles').select('full_name, avatar_url, email').eq('user_id', user.id).single();
     return data || { full_name: null, avatar_url: null, email: user.email };
   }
 
-  function renderUserWidget(state){
+  function renderUserWidget(state) {
     const container = document.getElementById('userWidget');
     const loginBtn = document.getElementById('authOpen');
-    if(!container) return;
-    if(!state || !state.user){
-      if(loginBtn){ loginBtn.style.display=''; loginBtn.textContent='🔐 Войти'; }
+    if (!container) return;
+
+    if (!state || !state.user) {
+      if (loginBtn) { loginBtn.style.display = ''; loginBtn.textContent = '🔐 Войти'; }
       container.innerHTML = '';
       return;
     }
-    if(loginBtn) loginBtn.style.display='none';
+    if (loginBtn) loginBtn.style.display = 'none';
+
     const name = state.profile?.full_name || state.user.user_metadata?.full_name || state.user.email;
     const avatar = state.profile?.avatar_url || state.user.user_metadata?.avatar_url || '';
     container.innerHTML = `
@@ -134,20 +184,22 @@
       </div>`;
     const nameEl = container.querySelector('#userName');
     const menu = container.querySelector('#userMenu');
-    nameEl.onclick = ()=>{ menu.style.display = (menu.style.display==='block' ? 'none' : 'block'); };
-    container.addEventListener('mouseleave', ()=>{ menu.style.display='none'; });
-    container.querySelector('#logoutBtn').onclick = async ()=>{ await client.auth.signOut(); };
+    nameEl.onclick = () => { menu.style.display = (menu.style.display === 'block' ? 'none' : 'block'); };
+    container.addEventListener('mouseleave', () => { menu.style.display = 'none'; });
+    container.querySelector('#logoutBtn').onclick = async () => { await client.auth.signOut(); };
   }
 
-  async function refreshUI(){
+  async function refreshUI() {
     ensureHeaderButtons();
     const { data: { session } } = await client.auth.getSession();
-    if(!session || !session.user){ renderUserWidget(null); return; }
+    if (!session || !session.user) { renderUserWidget(null); return; }
     const profile = await getProfile(session.user);
     renderUserWidget({ user: session.user, profile });
   }
 
-  client.auth.onAuthStateChange(async ()=>{ await refreshUI(); });
+  client.auth.onAuthStateChange(async () => { await refreshUI(); });
   window.addEventListener('DOMContentLoaded', refreshUI);
+
+  // Экспорт
   window.Auth = { client, open: openModal, close: closeModal, refreshUI };
 })();
