@@ -1,11 +1,9 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://sgswdxdpgursjfpvwnpj.supabase.co wss://sgswdxdpgursjfpvwnpj.supabase.co data: blob:; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:;">
-
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Проверка авторизации</title>
+  <title>Проверка авторизации — Supabase</title>
   <link rel="stylesheet" href="assets/style.css" />
 </head>
 <body class="wrap" style="max-width:760px">
@@ -31,8 +29,15 @@
       document.getElementById('btnUser').onclick = async ()=>{ const r = await Auth.client.auth.getUser(); log(r); };
       document.getElementById('btnPing').onclick = async ()=>{
         const u = (window.SUPABASE_URL||'').replace(/\/$/, '') + '/auth/v1/health';
-        try{ const r = await fetch(u, { method:'GET', mode:'cors', headers:{ apikey: window.SUPABASE_ANON_KEY, Authorization: `Bearer ${window.SUPABASE_ANON_KEY}` } }); log({status:r.status, ok:r.ok}); }
-        catch(e){ log(e.toString()); }
+        try{
+          const r = await fetch(u, {
+            method:'GET',
+            mode:'cors',
+            headers:{ apikey: window.SUPABASE_ANON_KEY, Authorization: `Bearer ${window.SUPABASE_ANON_KEY}` }
+          });
+          const text = await r.text();
+          log({status:r.status, ok:r.ok, body:text});
+        }catch(e){ log('Ping error: ' + e); }
       };
     });
   </script>
