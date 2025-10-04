@@ -64,7 +64,7 @@
     }
     function normalizeError(error){
       const msg=(error && (error.message||error.toString()))||'Unknown error';
-      if(msg==='Failed to fetch'){ return 'Failed to fetch\n\nПроверь: 1) ключи, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
+      if(msg==='Failed to fetch'){ return 'Failed to fetch\\n\\nПроверь: 1) ключи, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
       if(/Anonymous sign-ins/.test(msg)) return 'Введи email и пароль — анонимный вход отключён.';
       if(/Invalid API key/i.test(msg)) return 'Invalid API key — проверь anon ключ в assets/env.js';
       return msg;
@@ -89,17 +89,24 @@
   function openModal(){ buildModal(); backdrop.style.display='flex'; }
   function closeModal(){ if(backdrop) backdrop.style.display='none'; }
 
-  // Header user widget
+  // Header user widget (and fallback location)
   function ensureHeaderButtons(){
-    const header = document.querySelector('header .wrap.nav') || document.querySelector('header');
+    const header = document.querySelector('header .wrap.nav') || document.querySelector('header') || document.querySelector('.wrap') || document.body;
     if(!header) return;
-    if(!header.querySelector('#authOpen')){
-      const b=document.createElement('button'); b.id='authOpen'; b.className='btn'; b.textContent='🔐 Войти'; b.onclick=openModal; header.appendChild(b);
+    if(!document.getElementById('authOpen')){
+      const b=document.createElement('button'); b.id='authOpen'; b.className='btn'; b.type='button'; b.textContent='🔐 Войти';
+      header.appendChild(b);
     }
-    if(!header.querySelector('#userWidget')){
+    if(!document.getElementById('userWidget')){
       const div = document.createElement('div'); div.id = 'userWidget'; div.className = 'userwidget'; header.appendChild(div);
     }
   }
+
+  // Robust event delegation — реагируем на любые элементы для входа
+  document.addEventListener('click', (e)=>{
+    const t = e.target.closest('#authOpen,[data-auth-open],a[href="#login"],a[href*="login"],button[name="login"],.btn-login');
+    if(t){ e.preventDefault(); openModal(); }
+  });
 
   async function getProfile(user){
     if(!user) return null;
@@ -109,14 +116,13 @@
   }
 
   function renderUserWidget(state){
-    const header = document.querySelector('header .wrap.nav') || document.querySelector('header');
-    if(!header) return;
-    const loginBtn = header.querySelector('#authOpen');
-    const w = header.querySelector('#userWidget');
+    const container = document.getElementById('userWidget');
+    const loginBtn = document.getElementById('authOpen');
+    if(!container) return;
 
     if(!state || !state.user){
-      if(loginBtn) { loginBtn.style.display=''; loginBtn.textContent='🔐 Войти'; loginBtn.onclick=openModal; }
-      if(w) w.innerHTML = '';
+      if(loginBtn){ loginBtn.style.display=''; loginBtn.textContent='🔐 Войти'; }
+      container.innerHTML = '';
       return;
     }
     if(loginBtn) loginBtn.style.display='none';
@@ -124,7 +130,7 @@
     const name = state.profile?.full_name || state.user.user_metadata?.full_name || state.user.email;
     const avatar = state.profile?.avatar_url || state.user.user_metadata?.avatar_url || '';
 
-    w.innerHTML = `
+    container.innerHTML = `
       <img class="avatar" src="${avatar || 'assets/avatar-placeholder.png'}" alt="avatar" onerror="this.src='assets/avatar-placeholder.png'"/>
       <span class="name" id="userName" title="Нажми, чтобы открыть меню">${name}</span>
       <div class="menu" id="userMenu">
@@ -132,11 +138,11 @@
         <button id="logoutBtn">Выйти</button>
       </div>
     `;
-    const nameEl = w.querySelector('#userName');
-    const menu = w.querySelector('#userMenu');
+    const nameEl = container.querySelector('#userName');
+    const menu = container.querySelector('#userMenu');
     nameEl.onclick = ()=>{ menu.style.display = (menu.style.display==='block' ? 'none' : 'block'); };
-    w.addEventListener('mouseleave', ()=>{ menu.style.display='none'; });
-    w.querySelector('#logoutBtn').onclick = async ()=>{ await client.auth.signOut(); };
+    container.addEventListener('mouseleave', ()=>{ menu.style.display='none'; });
+    container.querySelector('#logoutBtn').onclick = async ()=>{ await client.auth.signOut(); };
   }
 
   async function refreshUI(){
