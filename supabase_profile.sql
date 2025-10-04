@@ -1,4 +1,4 @@
--- Profiles + avatars (RLS) + storage policies (GitHub Pages friendly)
+-- Profiles + avatars (RLS) + storage policies
 create table if not exists public.profiles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   email text not null unique,

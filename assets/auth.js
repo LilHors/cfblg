@@ -28,7 +28,6 @@
   `;
   const style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
 
-  // Modal
   let backdrop;
   function buildModal(){
     if(backdrop) return;
@@ -64,7 +63,7 @@
     }
     function normalizeError(error){
       const msg=(error && (error.message||error.toString()))||'Unknown error';
-      if(msg==='Failed to fetch'){ return 'Failed to fetch\\n\\nПроверь: 1) ключи, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
+      if(msg==='Failed to fetch'){ return 'Failed to fetch\n\nПроверь: 1) ключи, 2) https/не file://, 3) VPN/AdBlock, 4) Supabase → URL Configuration.'; }
       if(/Anonymous sign-ins/.test(msg)) return 'Введи email и пароль — анонимный вход отключён.';
       if(/Invalid API key/i.test(msg)) return 'Invalid API key — проверь anon ключ в assets/env.js';
       return msg;
@@ -89,7 +88,6 @@
   function openModal(){ buildModal(); backdrop.style.display='flex'; }
   function closeModal(){ if(backdrop) backdrop.style.display='none'; }
 
-  // Header user widget (and fallback location)
   function ensureHeaderButtons(){
     const header = document.querySelector('header .wrap.nav') || document.querySelector('header') || document.querySelector('.wrap') || document.body;
     if(!header) return;
@@ -102,7 +100,7 @@
     }
   }
 
-  // Robust event delegation — реагируем на любые элементы для входа
+  // Delegation — supports many button variants
   document.addEventListener('click', (e)=>{
     const t = e.target.closest('#authOpen,[data-auth-open],a[href="#login"],a[href*="login"],button[name="login"],.btn-login');
     if(t){ e.preventDefault(); openModal(); }
@@ -119,25 +117,21 @@
     const container = document.getElementById('userWidget');
     const loginBtn = document.getElementById('authOpen');
     if(!container) return;
-
     if(!state || !state.user){
       if(loginBtn){ loginBtn.style.display=''; loginBtn.textContent='🔐 Войти'; }
       container.innerHTML = '';
       return;
     }
     if(loginBtn) loginBtn.style.display='none';
-
     const name = state.profile?.full_name || state.user.user_metadata?.full_name || state.user.email;
     const avatar = state.profile?.avatar_url || state.user.user_metadata?.avatar_url || '';
-
     container.innerHTML = `
       <img class="avatar" src="${avatar || 'assets/avatar-placeholder.png'}" alt="avatar" onerror="this.src='assets/avatar-placeholder.png'"/>
       <span class="name" id="userName" title="Нажми, чтобы открыть меню">${name}</span>
       <div class="menu" id="userMenu">
         <a href="profile.html">Профиль</a>
         <button id="logoutBtn">Выйти</button>
-      </div>
-    `;
+      </div>`;
     const nameEl = container.querySelector('#userName');
     const menu = container.querySelector('#userMenu');
     nameEl.onclick = ()=>{ menu.style.display = (menu.style.display==='block' ? 'none' : 'block'); };
@@ -155,6 +149,5 @@
 
   client.auth.onAuthStateChange(async ()=>{ await refreshUI(); });
   window.addEventListener('DOMContentLoaded', refreshUI);
-
   window.Auth = { client, open: openModal, close: closeModal, refreshUI };
 })();
