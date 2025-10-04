@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://sgswdxdpgursjfpvwnpj.supabase.co wss://sgswdxdpgursjfpvwnpj.supabase.co data: blob:; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:;">
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Проверка авторизации</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body class="wrap" style="max-width:760px">
+  <h1>Проверка авторизации</h1>
+  <p class="muted">Быстрый тест соединения с Supabase.</p>
+  <div class="card" style="padding:16px">
+    <div id="env"></div>
+    <pre id="log" class="mono" style="margin-top:12px; white-space:pre-wrap"></pre>
+    <div class="actions">
+      <button class="btn" id="btnSession">getSession()</button>
+      <button class="btn" id="btnUser">getUser()</button>
+      <button class="btn" id="btnPing">Проверить /auth/v1/health</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/auth.js"></script>
+  <script>
+    const log = (x)=>{ const p = document.getElementById('log'); p.textContent += (typeof x==='string'? x : JSON.stringify(x,null,2)) + '\n'; };
+    window.addEventListener('load', async ()=>{
+      document.getElementById('env').innerHTML = '<b>SUPABASE_URL</b>: ' + (window.SUPABASE_URL||'—') + '<br><b>Anon Key</b>: ' + ((window.SUPABASE_ANON_KEY||'—').slice(0,12)+'...');
+      document.getElementById('btnSession').onclick = async ()=>{ const r = await Auth.client.auth.getSession(); log(r); };
+      document.getElementById('btnUser').onclick = async ()=>{ const r = await Auth.client.auth.getUser(); log(r); };
+      document.getElementById('btnPing').onclick = async ()=>{
+        const u = (window.SUPABASE_URL||'').replace(/\/$/, '') + '/auth/v1/health';
+        try{ const r = await fetch(u, { method:'GET', mode:'cors', headers:{ apikey: window.SUPABASE_ANON_KEY, Authorization: `Bearer ${window.SUPABASE_ANON_KEY}` } }); log({status:r.status, ok:r.ok}); }
+        catch(e){ log(e.toString()); }
+      };
+    });
+  </script>
+</body>
+</html>

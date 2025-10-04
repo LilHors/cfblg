@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https://sgswdxdpgursjfpvwnpj.supabase.co wss://sgswdxdpgursjfpvwnpj.supabase.co data: blob:; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:;">
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Федя — кофейный блог</title>
+  <meta name="description" content="Кофейный блог Феди: новости индустрии, рецепты и коллекция пачек." />
+  <meta property="og:title" content="Федя — кофейный блог" />
+  <meta property="og:description" content="Новости, рецепты и коллекция пачек." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>☕</text></svg>">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand">Федя</div>
+    <nav class="spacer" aria-label="Главное меню">
+      <a href="about.html" data-i18n="nav_about">Обо мне</a>
+      &nbsp;•&nbsp;
+      <a href="recipes.html" data-i18n="nav_recipes">Рецепты</a>
+      &nbsp;•&nbsp;
+      <a href="news.html" data-i18n="nav_news">Новости</a>
+      &nbsp;•&nbsp;
+      <a href="packs.html" data-i18n="nav_packs">Пачки</a>
+      &nbsp;•&nbsp;
+      <a href="gallery.html" data-i18n="nav_gallery">Галерея</a>
+     &nbsp;•&nbsp; <a href="studio.html">Студия</a></nav>
+    <button class="btn" id="modeBtn">🌓 <span data-i18n="ui_theme">Тема</span></button>
+    <button class="btn" id="langBtn">🌐 <span id="langLabel">RU</span></button>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="card">
+  <span class="badge" data-i18n="hero_badge">☕ Привет! Я Федя — веду кофейный блог</span>
+  <h1 data-i18n="hero_title">Новости, рецепты и коллекция пачек — всё про кофе</h1>
+  <p class="lead" data-i18n="hero_lead">Пишу об актуальном в индустрии, делюсь проверенными рецептами (V60, эспрессо, аэропресс) и веду каталог любимых пачек с заметками о вкусе.</p>
+  <div class="pill-row" style="margin-top:12px">
+    <span class="tag">Новости кофе</span><span class="tag">Рецепты</span>
+    <span class="tag">V60 · Эспрессо</span><span class="tag">Коллекция пачек</span>
+  </div>
+</section>
+
+<section>
+  <h2>Свежие заметки</h2>
+  <div class="grid cols-3">
+    <article class="card">
+      <h3>Рецепт: V60 18 → 300</h3>
+      <p class="muted">Импульсные вливания по 60 г × 5, 92–94 °C, 3:00–3:15.</p>
+      <small class="muted">04 окт 2025</small>
+    </article>
+    <article class="card">
+      <h3>Новость: тренд на мытую Эфиопию</h3>
+      <p class="muted">Коротко: что случилось и почему это важно.</p>
+      <small class="muted">03 окт 2025</small>
+    </article>
+    <article class="card">
+      <h3>Коллекция: Guatemala La Delicia</h3>
+      <p class="muted">Huehuetenango — яблоко, карамель, какао.</p>
+      <small class="muted">28 сен 2025</small>
+    </article>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>© <span id="year"></span> Федя</span>
+    <span class="muted">·</span>
+    <a href="index.html">Главная</a>
+  </div>
+</footer>
+<script src="assets/i18n.js"></script>
+<script src="assets/site.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>window.SUPABASE_URL="https://sgswdxdpgursjfpvwnpj.supabase.co";window.SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnc3dkeGRwZ3Vyc2pmcHZ3bnBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzUzNDksImV4cCI6MjA3NTExMTM0OX0.f4NWkoEkMqFLG0Ms2gmEVGAAebaSmBwJ9NpmHfM0RYs";</script>
+<script src="assets/auth.js"></script>
+</body>
+</html>
