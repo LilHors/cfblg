@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Пачки — кофейный блог</title>
+  <meta name="description" content="Кофейный блог Феди: новости индустрии, рецепты и коллекция пачек." />
+  <meta property="og:title" content="Пачки — кофейный блог" />
+  <meta property="og:description" content="Новости, рецепты и коллекция пачек." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0ea5e9" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>☕</text></svg>">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <div class="brand">Федя</div>
+    <nav class="spacer" aria-label="Главное меню">
+      <a href="about.html" data-i18n="nav_about">Обо мне</a>
+      &nbsp;•&nbsp;
+      <a href="recipes.html" data-i18n="nav_recipes">Рецепты</a>
+      &nbsp;•&nbsp;
+      <a href="news.html" data-i18n="nav_news">Новости</a>
+      &nbsp;•&nbsp;
+      <a href="packs.html" data-i18n="nav_packs">Пачки</a>
+      &nbsp;•&nbsp;
+      <a href="gallery.html" data-i18n="nav_gallery">Галерея</a>
+     &nbsp;•&nbsp; <a href=\"studio.html\">Студия</a></nav>
+    <button class="btn" id="modeBtn">🌓 <span data-i18n="ui_theme">Тема</span></button>
+    <button class="btn" id="langBtn">🌐 <span id="langLabel">RU</span></button>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="card">
+  <h2>Каталог пачек</h2>
+  <p class="muted">Поля: Обжарщик, Страна→Регион, Сорт(а), Обработка, Степень обжарки, Дата обжарки, Профиль вкуса, Любимый метод, Оценка 0–10, Где купил/цена, Фото.</p>
+</section>
+<section class="grid cols-3">
+  <article class="card">
+    <h3>Пример карточки</h3>
+    <p class="muted">Huehuetenango, мытая — яблоко, карамель, какао.</p>
+  </article>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span>© <span id="year"></span> Федя</span>
+    <span class="muted">·</span>
+    <a href="index.html">Главная</a>
+  </div>
+</footer>
+<script src="assets/i18n.js"></script>
+<script src="assets/site.js"></script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>window.SUPABASE_URL="https://sgswdxdpgursjfpvwnpj.supabase.co";window.SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNnc3dkeGRwZ3Vyc2pmcHZ3bnBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk1MzUzNDksImV4cCI6MjA3NTExMTM0OX0.f4NWkoEkMqFLG0Ms2gmEVGAAebaSmBwJ9NpmHfM0RYs";</script>
+<script src="assets/auth.js"></script>
+</body>
+</html>

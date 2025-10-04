@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Смена пароля</title>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body class="wrap" style="max-width:560px">
+  <h1>Смена пароля</h1>
+  <form id="form" class="card" style="padding:16px">
+    <label>Новый пароль <input type="password" id="pass1" required minlength="8"></label>
+    <label>Повтор пароля <input type="password" id="pass2" required minlength="8"></label>
+    <div class="actions" style="margin-top:12px">
+      <button class="btn" type="submit">Обновить пароль</button>
+      <a class="btn" href="index.html">На главную</a>
+    </div>
+    <p id="msg" class="muted"></p>
+  </form>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/auth.js"></script>
+  <script>
+  (async () => {
+    const code = new URLSearchParams(location.search).get('code');
+    const msg = document.getElementById('msg');
+    if (!code) { msg.textContent = 'Ссылка недействительна (нет кода).'; return; }
+    try {
+      const { error } = await Auth.client.auth.exchangeCodeForSession(code);
+      if (error) throw error;
+    } catch (e) {
+      msg.textContent = 'Не удалось создать сессию: ' + (e && e.message || e);
+      return;
+    }
+    document.getElementById('form').addEventListener('submit', async (ev) => {
+      ev.preventDefault();
+      const p1 = document.getElementById('pass1').value;
+      const p2 = document.getElementById('pass2').value;
+      if (p1 !== p2) { msg.textContent = 'Пароли не совпадают.'; return; }
+      const { error } = await Auth.client.auth.updateUser({ password: p1 });
+      if (error) { msg.textContent = 'Ошибка: ' + error.message; return; }
+      msg.textContent = 'Пароль обновлён. Можно закрыть вкладку.';
+    });
+  })();
+  </script>
+</body>
+</html>
