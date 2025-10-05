@@ -23,18 +23,23 @@
     if(nameEl) nameEl.value = '';
     const avatarEl = document.getElementById('avatar');
     if(avatarEl) avatarEl.src = placeholderAvatar;
+    const emailEl = document.getElementById('profileEmail');
+    if(emailEl) emailEl.textContent = '—';
   }
 
   async function loadProfile(){
     const SB = await waitForAuth();
     const user = await requireAuth(SB).catch(()=>null);
-    if(!user) return;
+    if(!user){ msg('Войдите, чтобы настроить профиль.'); clearProfileUI(); return; }
     await SB.from('profiles').upsert({ user_id: user.id, email: user.email }).select().single().catch(()=>{});
     const { data, error } = await SB.from('profiles').select('full_name, avatar_url, email').eq('user_id', user.id).single();
     if(error){ msg('Ошибка чтения профиля: ' + error.message); return; }
     document.getElementById('fullName').value = data?.full_name || '';
     const url = data?.avatar_url || placeholderAvatar;
     document.getElementById('avatar').src = url;
+    const emailEl = document.getElementById('profileEmail');
+    if(emailEl) emailEl.textContent = data?.email || user.email || '—';
+    msg('');
   }
 
   async function saveProfile(){
@@ -81,6 +86,7 @@
             loadProfile().catch(()=>{});
           }else if(event === 'SIGNED_OUT'){
             clearProfileUI();
+            msg('Войдите, чтобы настроить профиль.');
           }
         });
       }catch(e){

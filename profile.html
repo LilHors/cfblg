@@ -7,12 +7,16 @@
   <link rel="stylesheet" href="assets/style.css" />
   <style>
     .profile { max-width: 720px; margin: 24px auto; }
-    .row { display:flex; gap:16px; align-items:center; }
+    .row { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
     .card { border:1px solid #263040; border-radius:16px; padding:16px; background:#111827; color:#e5e7eb; }
     .btn { display:inline-block; padding:8px 12px; border-radius:10px; border:1px solid #2f3640; background:#0f172a; color:#e5e7eb; cursor:pointer; margin-right:8px; }
     input[type="text"] { padding:10px 12px; border-radius:12px; border:1px solid #2f3640; background:#0f172a; color:#e5e7eb; width:100%; }
     .avatar { width:96px; height:96px; border-radius:999px; object-fit:cover; border:1px solid #2f3640; background:#1f2937; }
     label.file { display:inline-block; }
+    .email-row { display:flex; flex-direction:column; gap:4px; margin-top:16px; }
+    .email-label { font-size:14px; color:#9ca3af; }
+    .email-value { display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px; border:1px solid #2f3640; background:#0f172a; font-weight:600; word-break:break-all; }
+    @media (max-width:540px){ .btn{margin-bottom:8px;} }
   </style>
 </head>
 <body>
@@ -45,6 +49,11 @@
         <small class="muted">Рекомендуется квадратное изображение 512×512, PNG/JPG.</small>
       </div>
     </div>
+    <div class="email-row">
+      <span class="email-label">Email</span>
+      <div id="profileEmail" class="email-value">—</div>
+    </div>
+
     <div style="margin-top:16px">
       <label>ФИО
         <input id="fullName" type="text" placeholder="Иванов Иван Иванович">
