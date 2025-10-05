@@ -221,7 +221,10 @@
     renderUserWidget({ user: session.user, profile: profile });
   }
 
-  client.auth.onAuthStateChange(async function () { await refreshUI(); });
+  client.auth.onAuthStateChange(async function (event, session) {
+    if (event === "SIGNED_IN" || (session && session.user)) { closeModal(); }
+    await refreshUI();
+  });
   window.addEventListener("DOMContentLoaded", refreshUI);
 
   // export
