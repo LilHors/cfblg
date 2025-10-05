@@ -20,11 +20,29 @@
   <script src="assets/gh-loader.js"></script>
   <script>
   (async () => {
+    async function waitForAuth(ms = 5000) {
+      const start = Date.now();
+      while (Date.now() - start < ms) {
+        if (window.Auth?.client) return window.Auth.client;
+        await new Promise((r) => setTimeout(r, 50));
+      }
+      throw new Error('auth-not-ready');
+    }
+
     const code = new URLSearchParams(location.search).get('code');
     const msg = document.getElementById('msg');
     if (!code) { msg.textContent = 'Ссылка недействительна (нет кода).'; return; }
+
+    let SB;
     try {
-      const { error } = await Auth.client.auth.exchangeCodeForSession(code);
+      SB = await waitForAuth();
+    } catch (e) {
+      msg.textContent = 'Не удалось загрузить модуль авторизации. Попробуйте обновить страницу.';
+      return;
+    }
+
+    try {
+      const { error } = await SB.auth.exchangeCodeForSession(code);
       if (error) throw error;
     } catch (e) {
       msg.textContent = 'Не удалось создать сессию: ' + (e && e.message || e);
@@ -35,9 +53,18 @@
       const p1 = document.getElementById('pass1').value;
       const p2 = document.getElementById('pass2').value;
       if (p1 !== p2) { msg.textContent = 'Пароли не совпадают.'; return; }
-      const { error } = await Auth.client.auth.updateUser({ password: p1 });
-      if (error) { msg.textContent = 'Ошибка: ' + error.message; return; }
-      msg.textContent = 'Пароль обновлён. Можно закрыть вкладку.';
+      try {
+        const client = SB || await waitForAuth();
+        const { error } = await client.auth.updateUser({ password: p1 });
+        if (error) { msg.textContent = 'Ошибка: ' + error.message; return; }
+        msg.textContent = 'Пароль обновлён. Можно закрыть вкладку.';
+      } catch (e) {
+        if (e && e.message === 'auth-not-ready') {
+          msg.textContent = 'Модуль авторизации так и не загрузился. Попробуйте обновить страницу.';
+        } else {
+          msg.textContent = 'Ошибка: ' + (e && e.message || e);
+        }
+      }
     });
   })();
   </script>
