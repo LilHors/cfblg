@@ -16,6 +16,15 @@
     return user;
   }
 
+  const placeholderAvatar = 'assets/avatar-placeholder.png';
+
+  function clearProfileUI(){
+    const nameEl = document.getElementById('fullName');
+    if(nameEl) nameEl.value = '';
+    const avatarEl = document.getElementById('avatar');
+    if(avatarEl) avatarEl.src = placeholderAvatar;
+  }
+
   async function loadProfile(){
     const SB = await waitForAuth();
     const user = await requireAuth(SB).catch(()=>null);
@@ -24,7 +33,7 @@
     const { data, error } = await SB.from('profiles').select('full_name, avatar_url, email').eq('user_id', user.id).single();
     if(error){ msg('Ошибка чтения профиля: ' + error.message); return; }
     document.getElementById('fullName').value = data?.full_name || '';
-    const url = data?.avatar_url || 'assets/avatar-placeholder.png';
+    const url = data?.avatar_url || placeholderAvatar;
     document.getElementById('avatar').src = url;
   }
 
@@ -63,5 +72,20 @@
     loadProfile().catch(()=>{});
     document.getElementById('saveProfile').onclick = saveProfile;
     document.getElementById('saveAvatar').onclick = uploadAvatar;
+
+    (async()=>{
+      try{
+        const SB = await waitForAuth();
+        SB.auth.onAuthStateChange((event)=>{
+          if(event === 'SIGNED_IN'){
+            loadProfile().catch(()=>{});
+          }else if(event === 'SIGNED_OUT'){
+            clearProfileUI();
+          }
+        });
+      }catch(e){
+        console.error('auth-listener-error', e);
+      }
+    })();
   });
 })();
