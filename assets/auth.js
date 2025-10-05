@@ -22,8 +22,11 @@
     ".auth-error{color:#ef4444;font-size:13px;margin-top:6px;white-space:pre-wrap}" +
     ".userwidget{position:relative;display:inline-flex;align-items:center;gap:8px;margin-left:8px}" +
     ".userwidget .avatar{width:28px;height:28px;border-radius:999px;object-fit:cover;border:1px solid #2f3640;background:#1f2937}" +
-    ".userwidget .name{cursor:pointer;user-select:none}" +
-    ".userwidget .menu{position:absolute;right:0;top:120%;background:#0f172a;border:1px solid #2f3640;border-radius:10px;min-width:180px;display:none;z-index:2147483647}" +
+    ".userwidget .profile-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;border:1px solid #2f3640;background:#0f172a;color:#e5e7eb;font-size:14px;line-height:1;text-decoration:none}" +
+    ".userwidget .profile-chip:hover{background:#111827}" +
+    ".userwidget .menu-btn{border:1px solid #2f3640;background:#0f172a;color:#e5e7eb;border-radius:12px;padding:6px 8px;cursor:pointer}" +
+    ".userwidget .menu-btn:hover{background:#111827}" +
+    ".userwidget .menu{position:absolute;right:0;top:120%;background:#0f172a;border:1px solid #2f3640;border-radius:10px;min-width:160px;display:none;z-index:2147483647}" +
     ".userwidget .menu a,.userwidget .menu button{display:block;width:100%;text-align:left;padding:8px 10px;border:0;background:transparent;color:#e5e7eb;cursor:pointer}" +
     ".userwidget .menu a:hover,.userwidget .menu button:hover{background:#111827}";
   var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
@@ -206,17 +209,40 @@
                  "";
 
     container.innerHTML =
-      '<img class="avatar" src="' + (avatar || 'assets/avatar-placeholder.png') + '" alt="avatar" onerror="this.src=\'assets/avatar-placeholder.png\'"/>' +
-      '<span class="name" id="userName" title="Нажми, чтобы открыть меню">' + name + '</span>' +
+      '<a class="profile-chip" id="profileChip" href="profile.html" title="Открыть профиль">' +
+      '  <img class="avatar" src="' + (avatar || 'assets/avatar-placeholder.png') + '" alt="avatar" onerror="this.src=\\'assets/avatar-placeholder.png\\'"/>' +
+      '  <span class="name">' + name + '</span>' +
+      '</a>' +
+      '<button class="menu-btn" id="profileMenuBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Меню профиля">⋯</button>' +
       '<div class="menu" id="userMenu">' +
-      '  <a href="profile.html">Профиль</a>' +
-      '  <button id="logoutBtn">Выйти</button>' +
+      '  <button id="logoutBtn" type="button">Выйти</button>' +
       '</div>';
 
-    var nameEl = container.querySelector("#userName");
+    var menuBtn = container.querySelector("#profileMenuBtn");
     var menu = container.querySelector("#userMenu");
-    nameEl.onclick = function () { menu.style.display = (menu.style.display === "block" ? "none" : "block"); };
-    container.addEventListener("mouseleave", function () { menu.style.display = "none"; });
+    function hideMenu(){ if(menu){ menu.style.display = "none"; if(menuBtn) menuBtn.setAttribute("aria-expanded","false"); } }
+    function toggleMenu(){
+      if(!menu) return;
+      var isOpen = menu.style.display === "block";
+      if(isOpen){
+        hideMenu();
+      }else{
+        menu.style.display = "block";
+        if(menuBtn) menuBtn.setAttribute("aria-expanded", "true");
+        var handler = function(ev){
+          if(!container.contains(ev.target)){
+            hideMenu();
+            document.removeEventListener("click", handler);
+          }
+        };
+        setTimeout(function(){ document.addEventListener("click", handler); }, 0);
+      }
+    }
+
+    if(menuBtn){
+      menuBtn.onclick = function (e) { e.preventDefault(); toggleMenu(); };
+    }
+    container.addEventListener("mouseleave", hideMenu);
     container.querySelector("#logoutBtn").onclick = async function () { await client.auth.signOut(); };
   }
 
