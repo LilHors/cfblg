@@ -157,18 +157,65 @@
 
   // ---------- header + delegation ----------
   function ensureHeaderButtons() {
-    var header =
-      document.querySelector("header .wrap.nav") ||
-      document.querySelector("header") ||
-      document.querySelector(".wrap") ||
-      document.body;
+  // Try to mount controls strictly inside header nav area.
+  var header = document.querySelector("header .wrap.nav");
+  if (!header) header = document.querySelector("header");
+  if (!header) header = document.querySelector(".wrap");
+  if (!header) header = document.body;
 
-    if (!header) return;
+  // Find position next to theme/lang buttons if present
+  var afterEl = document.getElementById("langBtn") || document.getElementById("modeBtn");
 
-    if (!document.getElementById("authOpen")) {
-      var b = document.createElement("button");
-      b.id = "authOpen"; b.className = "btn"; b.type = "button"; b.textContent = "🔐 Войти";
-      header.appendChild(b);
+  // Create/ensure login button
+  var loginBtn = document.getElementById("authOpen");
+  if (!loginBtn) {
+    loginBtn = document.createElement("button");
+    loginBtn.id = "authOpen";
+    loginBtn.className = "btn";
+    loginBtn.type = "button";
+    loginBtn.textContent = "🔐 Войти";
+    loginBtn.setAttribute("data-auth-open","1");
+    // Inline styles to avoid accidental hidden state
+    loginBtn.style.display = "inline-flex";
+    loginBtn.style.alignItems = "center";
+    loginBtn.style.gap = "6px";
+    if (afterEl && afterEl.parentElement === header) {
+      header.insertBefore(loginBtn, afterEl.nextSibling);
+    } else {
+      header.appendChild(loginBtn);
+    }
+  }
+
+  // Ensure user widget container exists right after the login button (so place doesn't jump)
+  var widget = document.getElementById("userWidget");
+  if (!widget) {
+    widget = document.createElement("div");
+    widget.id = "userWidget";
+    widget.className = "userwidget";
+    if (loginBtn.parentElement) {
+      loginBtn.parentElement.insertBefore(widget, loginBtn.nextSibling);
+    } else {
+      header.appendChild(widget);
+    }
+  }
+
+  // Fallback: if header wasn't found initially, add a floating login button
+  // (only if login button is not visible in layout)
+  setTimeout(function(){
+    var rect = loginBtn.getBoundingClientRect();
+    var notVisible = (rect.width === 0 || rect.height === 0);
+    var hasFloating = document.getElementById("authOpenFloating");
+    if (notVisible && !hasFloating) {
+      var fab = loginBtn.cloneNode(true);
+      fab.id = "authOpenFloating";
+      fab.style.position = "fixed";
+      fab.style.right = "16px";
+      fab.style.bottom = "16px";
+      fab.style.zIndex = "2147483646";
+      document.body.appendChild(fab);
+    }
+  }, 500);
+
     }
     if (!document.getElementById("userWidget")) {
       var d = document.createElement("div"); d.id = "userWidget"; d.className = "userwidget"; header.appendChild(d);
@@ -195,7 +242,7 @@
     if (!container) return;
 
     if (!state || !state.user) {
-      if (loginBtn) { loginBtn.style.display = ""; loginBtn.textContent = "🔐 Войти"; }
+      if (loginBtn) { loginBtn.style.display = "inline-flex"; loginBtn.textContent = "🔐 Войти"; }
       container.innerHTML = "";
       return;
     }

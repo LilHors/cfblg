@@ -3,14 +3,14 @@
   const dict = {
     ru: {
       nav_about:'Обо мне', nav_recipes:'Рецепты', nav_news:'Новости',
-      nav_packs:'Пачки', nav_gallery:'Галерея', ui_theme:'Тема', ui_login:'Войти',
+      nav_packs:'Пачки', nav_gallery:'Галерея', ui_theme:'Тема',
       hero_badge:'☕ Привет! Я Федя — веду кофейный блог',
       hero_title:'Новости, рецепты и коллекция пачек — всё про кофе',
       hero_lead:'Пишу об актуальном в индустрии, делюсь проверенными рецептами (V60, эспрессо, аэропресс) и веду каталог любимых пачек с заметками о вкусе.'
     },
     en: {
       nav_about:'About', nav_recipes:'Recipes', nav_news:'News',
-      nav_packs:'Bags', nav_gallery:'Gallery', ui_theme:'Theme', ui_login:'Sign in',
+      nav_packs:'Bags', nav_gallery:'Gallery', ui_theme:'Theme',
       hero_badge:"☕ Hi! I'm Fedya — running a coffee blog",
       hero_title:'News, recipes & bag collection — all about coffee',
       hero_lead:'I cover industry news, share recipes (V60, espresso, AeroPress) and keep a catalog of my favorite bags with tasting notes.'
