@@ -75,6 +75,14 @@
       return msg;
     }
 
+    function goToProfile() {
+      try {
+        window.location.href = "profile.html";
+      } catch (_) {
+        // ignore
+      }
+    }
+
     // ---- sign in (устойчивый, без 422) ----
     document.getElementById("doSignIn").onclick = async function () {
       clearError();
@@ -86,7 +94,7 @@
         // 1) штатный вход
         var r1 = await client.auth.signInWithPassword({ email: email, password: password });
         if (!r1.error && r1.data && r1.data.session) {
-          closeModal(); await refreshUI(); return;
+          closeModal(); await refreshUI(); goToProfile(); return;
         }
 
         // 2) резерв: прямой POST
@@ -118,7 +126,7 @@
           }
         }
 
-        closeModal(); await refreshUI();
+        closeModal(); await refreshUI(); goToProfile();
       } catch (e) {
         showError(normalize(e && e.message ? e.message : String(e)));
       }
